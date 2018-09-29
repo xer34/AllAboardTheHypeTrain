@@ -35,9 +35,7 @@ $("#sumbit-button").on("click", function(event) {
   planetName = $("#planetName")
     .val()
     .trim();
-  firstArrival = $("#firstArrival")
-    .val()
-    .trim();
+  firstArrival = $("#firstArrival").val();
   frequency = $("#frequency")
     .val()
     .trim();
@@ -58,29 +56,63 @@ $("#sumbit-button").on("click", function(event) {
 });
 
 //on child added, snapshot it and console log that biz
-database.ref().on("child_added", function(childSnapshot) {
-  console.log(childSnapshot.val().shipName);
-  console.log(childSnapshot.val().planetName);
-  console.log(childSnapshot.val().firstArrival);
-  console.log(childSnapshot.val().frequency);
-  console.log(childSnapshot.val().dateAdded);
-  console.log("----------------------------------");
+database.ref().on(
+  "child_added",
+  function(childSnapshot) {
+    console.log(childSnapshot.val().shipName);
+    console.log(childSnapshot.val().planetName);
+    console.log(childSnapshot.val().firstArrival);
+    console.log(childSnapshot.val().frequency);
+    console.log(childSnapshot.val().dateAdded);
+    console.log("----------------------------------");
 
-// make jquery make a table for you. do it jquery. like it. love it.
-  var newRow = $("<tr>").append(
-      $("<td>").text(shipName),
-      $("<td>").text(planetName),
-      $("<td>").text(firstArrival),
-      $("<td>").text(frequency),
-     // placeholder for next arrival time
-    //   $("<td>").text(nextArrival)
-      )
+    // //time handler
 
-// append it to the bottom 
-$("#spaceTable > tbody").append(newRow)
+    //frequency
+    var tFrequency = childSnapshot.val().frequency;
 
-});
+    //time
+    var firstTime = childSnapshot.val().firstArrival;
 
-// save those variables to firebase '.on("value")', then update dom with snapshot
+    //first time
+    var firstTimeConverted = moment(firstTime, "HH:mm").subtract(1, "years");
+    console.log(firstTimeConverted);
 
-// dynamically created rows for a table
+    //current time
+    var currentTime = moment();
+    console.log("CURRENT TIME: " + moment(currentTime).format("hh:mm"));
+
+    // Difference between the times
+    var diffTime = moment().diff(moment(firstTimeConverted), "minutes");
+    console.log("DIFFERENCE IN TIME: " + diffTime);
+
+    // Time apart
+    var tRemainder = diffTime % tFrequency;
+    console.log(tRemainder);
+
+    //next min
+    var tMinutesTillTrain = tFrequency - tRemainder;
+    console.log("MINUTES TILL SHIP: " + tMinutesTillTrain);
+
+    //next one
+    var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+    console.log("ARRIVAL TIME: " + moment(nextTrain).format("hh:mm"));
+
+    // make jquery make a table for you. do it jquery. like it. love it.
+    var newRow = $("<tr scope='row'>").append(
+      $("<th>").text(childSnapshot.val().shipName),
+      $("<td>").text(childSnapshot.val().planetName),
+      $("<td>").text(childSnapshot.val().frequency),
+      $("<td>").text(moment(nextTrain).format("hh:mm")),
+      $("<td>").text(tMinutesTillTrain)
+    );
+
+    // append it to the bottom
+    $("#spaceTable > tbody").append(newRow);
+
+    //error handler, copypasta
+  },
+  function(errorObject) {
+    console.log("Errors handled: " + errorObject.code);
+  }
+);
